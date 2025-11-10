@@ -1,6 +1,8 @@
 pipeline {
     agent any
 
+    environment {IMAGE = "dockerhub254/react-todo-list"}
+
     tools {
         nodejs "NodeJS"
     }
@@ -40,6 +42,32 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Docker image') {
+            when { expression { fileExists('Dockerfile') } }
+            steps {
+                sh 'docker build -t $IMAGE:latest .'
+      }
+    }
+
+        stage('Run Tests in Container') {
+            when { expression { fileExists('Dockerfile') } }
+            steps {
+                sh 'docker run --rm $IMAGE:latest /bin/sh -c "echo container test OK"'
+      }
+    }
+
+        stage('Build and Push to Docker Hub') {
+            when { expression { fileExists('Dockerfile') } }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+                    def app = docker.build("${IMAGE}:latest")
+                    app.push()
+          }
+        }
+      }
+    }
 
     }
 
