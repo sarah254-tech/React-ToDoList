@@ -1,40 +1,33 @@
 pipeline {
     agent any
 
-<<<<<<< HEAD:scripts/Jenkinsfile
-    environment {IMAGE = "dockerhub254/react-todo-list"}
-
-    tools {
-        nodejs "NodeJS"
-    }
-
-=======
->>>>>>> c3cfd7b52669dfb0e9775641a904d588ca1fe592:Jenkinsfile
     stages {
 
         stage("Checkout code") {
             steps {
-<<<<<<< HEAD:scripts/Jenkinsfile
-                git branch: 'sarah-feature',
-                    url: 'https://github.com/sarah254-tech/React-ToDoList'
-=======
-                git branch: 'peter-branch', url: 'https://github.com/bigcephas1/React-ToDoList.git'
->>>>>>> c3cfd7b52669dfb0e9775641a904d588ca1fe592:Jenkinsfile
+                git branch: 'sarah-feature', url: 'https://github.com/sarah254-tech/React-ToDoList.git'
             }
         }
 
         stage("Build image and push") {
             steps {
                 withCredentials([
-                    usernamePassword(credentialsId: 'docker_creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')
+                    usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')
                 ]) {
 
                     sh '''
-                        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-                        docker build -t $DOCKER_USERNAME/ci_backend_full_pipeline:v1 -f backend/Dockerfile backend
-                        docker build -t $DOCKER_USERNAME/ci_frontend_full_pipeline:v1 -f dive-react-app/Dockerfile dive-react-app
-                        docker push $DOCKER_USERNAME/ci_backend_full_pipeline:v1
-                        docker push $DOCKER_USERNAME/ci_frontend_full_pipeline:v1
+                        echo "Logging in to DockerHub..."
+                        echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
+
+                        echo "Building backend image..."
+                        docker build -t $USERNAME/ci_backend_full_pipeline:v1 -f backend/Dockerfile backend
+
+                        echo "Building frontend image..."
+                        docker build -t $USERNAME/ci_frontend_full_pipeline:v1 -f dive-react-app/Dockerfile dive-react-app
+
+                        echo "Pushing images..."
+                        docker push $USERNAME/ci_backend_full_pipeline:v1
+                        docker push $USERNAME/ci_frontend_full_pipeline:v1
                     '''
                 }
             }
@@ -45,7 +38,7 @@ pipeline {
                 withCredentials([
                     sshUserPrivateKey(credentialsId: 'EC2_KEY', keyFileVariable: 'SSH_KEY'),
                     string(credentialsId: 'EC2_HOST', variable: 'EC2_HOST'),
-                    usernamePassword(credentialsId: 'docker_creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')
+                    usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')
                 ]) {
 
                     sh '''
@@ -53,9 +46,9 @@ pipeline {
 
     ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST << EOF
         echo "Connected to EC2"
-        export DOCKER_USERNAME="$DOCKER_USERNAME"
-        export DOCKER_PASSWORD="$DOCKER_PASSWORD"
-        cd /home/ubuntu/React-ToDoList
+        export USERNAME="$USERNAME"
+        export PASSWORD="$PASSWORD"
+        cd /home/sara/WTF_assignments/React-ToDoList
         bash ~/React-ToDoList/deploy.sh
 EOF
 '''
@@ -63,56 +56,6 @@ EOF
                 }
             }
         }
-<<<<<<< HEAD:scripts/Jenkinsfile
-
-        stage('Build Docker image') {
-            when { expression { fileExists('Dockerfile') } }
-            steps {
-                sh 'docker build -t $IMAGE:latest .'
-      }
-    }
-
-        stage('Run Tests in Container') {
-            when { expression { fileExists('Dockerfile') } }
-            steps {
-                sh 'docker run --rm $IMAGE:latest /bin/sh -c "echo container test OK"'
-      }
-    }
-
-        stage('Build and Push to Docker Hub') {
-            when { expression { fileExists('Dockerfile') } }
-            steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                    def app = docker.build("${IMAGE}:latest")
-                    app.push()
-          }
-        }
-      }
-    }
-
-    }
-
-    post {
-        always {
-            cleanWs()
-        }
-        success {
-            emailext(
-                subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: "The build ${env.BUILD_URL} completed successfully.",
-                to: "sarahamadi97@gmail.com"
-            )
-        }
-        failure {
-            emailext(
-                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: "The build ${env.BUILD_URL} failed. Please check the logs.",
-                to: "sarahamadi97@gmail.com"
-            )
-        }
-=======
->>>>>>> c3cfd7b52669dfb0e9775641a904d588ca1fe592:Jenkinsfile
     }
 }
 
