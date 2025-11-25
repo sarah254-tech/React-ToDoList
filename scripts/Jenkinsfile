@@ -5,7 +5,7 @@ pipeline {
 
         stage("Checkout code") {
             steps {
-                git branch: 'sarah-feature', url: 'https://github.com/sarah254-tech/React-ToDoList.git'
+                git branch: 'sarah-feature', url: 'https://github.com/sarah254-tech/scripts/React-ToDoList.git'
             }
         }
 
