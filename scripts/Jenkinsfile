@@ -9,7 +9,7 @@ pipeline {
             }
         }
 
-        stage("Build image and push") 
+        stage("Build image and push") {
             steps {
                 withCredentials([
                     usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')
@@ -31,6 +31,7 @@ pipeline {
                     '''
                 }
             }
+        }
 
         stage("Deploy to EC2") {
             steps {
