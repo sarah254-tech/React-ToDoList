@@ -1,47 +1,69 @@
 pipeline {
     agent any
 
+<<<<<<< HEAD:scripts/Jenkinsfile
     environment {IMAGE = "dockerhub254/react-todo-list"}
 
     tools {
         nodejs "NodeJS"
     }
 
+=======
+>>>>>>> c3cfd7b52669dfb0e9775641a904d588ca1fe592:Jenkinsfile
     stages {
 
-        stage('Checkout') {
+        stage("Checkout code") {
             steps {
+<<<<<<< HEAD:scripts/Jenkinsfile
                 git branch: 'sarah-feature',
                     url: 'https://github.com/sarah254-tech/React-ToDoList'
+=======
+                git branch: 'peter-branch', url: 'https://github.com/bigcephas1/React-ToDoList.git'
+>>>>>>> c3cfd7b52669dfb0e9775641a904d588ca1fe592:Jenkinsfile
             }
         }
 
-        stage('Frontend Build') {
+        stage("Build image and push") {
             steps {
-                dir('dive-react-app') {
-                    echo "Installing frontend dependencies"
-                    sh 'npm install'
+                withCredentials([
+                    usernamePassword(credentialsId: 'docker_creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')
+                ]) {
 
-                    echo "Running lint"
-                    sh 'npm run lint'
-
-                    echo "Building frontend"
-                    sh 'npm run build'
+                    sh '''
+                        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+                        docker build -t $DOCKER_USERNAME/ci_backend_full_pipeline:v1 -f backend/Dockerfile backend
+                        docker build -t $DOCKER_USERNAME/ci_frontend_full_pipeline:v1 -f dive-react-app/Dockerfile dive-react-app
+                        docker push $DOCKER_USERNAME/ci_backend_full_pipeline:v1
+                        docker push $DOCKER_USERNAME/ci_frontend_full_pipeline:v1
+                    '''
                 }
             }
         }
 
-        stage('Backend Install') {
+        stage("Deploy to EC2") {
             steps {
-                dir('backend') {
-                    echo "Installing backend dependencies"
-                    sh 'npm install'
+                withCredentials([
+                    sshUserPrivateKey(credentialsId: 'EC2_KEY', keyFileVariable: 'SSH_KEY'),
+                    string(credentialsId: 'EC2_HOST', variable: 'EC2_HOST'),
+                    usernamePassword(credentialsId: 'docker_creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')
+                ]) {
 
-                    echo "Running backend tests (instead of starting server)"
-                    sh 'npm test || true'   // prevents failure if no tests exist
+                    sh '''
+    chmod 600 $SSH_KEY
+
+    ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST << EOF
+        echo "Connected to EC2"
+        export DOCKER_USERNAME="$DOCKER_USERNAME"
+        export DOCKER_PASSWORD="$DOCKER_PASSWORD"
+        cd /home/ubuntu/React-ToDoList
+        bash ~/React-ToDoList/deploy.sh
+EOF
+'''
+
                 }
             }
         }
+<<<<<<< HEAD:scripts/Jenkinsfile
 
         stage('Build Docker image') {
             when { expression { fileExists('Dockerfile') } }
@@ -89,6 +111,8 @@ pipeline {
                 to: "sarahamadi97@gmail.com"
             )
         }
+=======
+>>>>>>> c3cfd7b52669dfb0e9775641a904d588ca1fe592:Jenkinsfile
     }
 }
 
