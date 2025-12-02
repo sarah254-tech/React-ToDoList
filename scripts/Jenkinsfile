@@ -42,58 +42,31 @@ pipeline {
              ]) {
 
                 sh '''
-                     # Make SSH key secure
-                    chmod 600 $SSH_KEY
+        
+                chmod 600 $SSH_KEY
 
-                    # SSH into EC2
-                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST << 'EOF'
+                # SSH into EC2 and deploy
+                ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST << EOF
                     echo "Connected to EC2"
 
                     # Set environment variables for DockerHub
                     export USERNAME="$USERNAME"
                     export PASSWORD="$PASSWORD"
 
-                    # Directory for the React-ToDoList app
+                    # Navigate to app directory
                     APP_DIR="/home/ubuntu/React-ToDoList"
-
-                    # Check if app directory exists
                     if [ ! -d "$APP_DIR" ]; then
-                        mkdir -p "$APP_DIR"
+                        echo "Error: App directory $APP_DIR does not exist"
+                        exit 1
                     fi
                     cd "$APP_DIR"
 
-                    # Configure a dedicated SSH key for GitHub (EC2 deployment key)
-                    DEPLOY_KEY="$APP_DIR/id_ed25519_ec2"
-                    if [ ! -f "$DEPLOY_KEY" ]; then
-                        ssh-keygen -t ed25519 -C "ec2-instance" -f "$DEPLOY_KEY" -N ""
-                        echo "Please add the public key to GitHub:"
-                        cat "$DEPLOY_KEY.pub"
-                        echo "Cloning will fail until the key is added to GitHub"
-                        exit 1
-                    fi
-
-                    # Configure SSH to use this key for GitHub
-                    mkdir -p ~/.ssh
-                    echo "Host github-ec2
-                        HostName github.com
-                        User git
-                        IdentityFile $DEPLOY_KEY
-                        StrictHostKeyChecking no" > ~/.ssh/config
-                    chmod 600 ~/.ssh/config
-
-                    # Clone or pull the repo using the dedicated key
-                    if [ ! -d "React-ToDoList" ]; then
-                        git clone git@github-ec2:sarah254-tech/React-ToDoList.git .
-                    else
-                        git -C . pull
-                    fi
-
-                    # Make deploy.sh executable
+                    # Make deploy.sh executable and run it
                     if [ -f "deploy.sh" ]; then
                         chmod +x deploy.sh
                         bash deploy.sh
                     else
-                        echo "Error: deploy.sh not found"
+                        echo "Error: deploy.sh not found in $APP_DIR"
                         exit 1
                     fi
 EOF
