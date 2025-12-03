@@ -54,7 +54,7 @@ pipeline {
                     export PASSWORD="$PASSWORD"
 
                     # Navigate to app directory
-                    APP_DIR="/home/ubuntu/React-ToDoList/dive-react-app"
+                    APP_DIR="/home/ubuntu/React-ToDoList/scripts"
                     if [ ! -d "$APP_DIR" ]; then
                         echo "Error: App directory $APP_DIR does not exist"
                         exit 1
