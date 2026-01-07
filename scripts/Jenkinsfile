@@ -33,30 +33,71 @@ pipeline {
             }
         }
 
-        stage("Deploy to EC2") {
+        stage("Implement Terraform") {
+            
             steps {
-                withCredentials([
-                    sshUserPrivateKey(credentialsId: 'EC2_KEY', keyFileVariable: 'SSH_KEY'),
-                    string(credentialsId: 'EC2_HOST', variable: 'EC2_HOST'),
-                    usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')
-                ]) {
+                dir("terraform/modules") {
+                    sh 'terraform init'
+                    sh 'terraform apply --auto-approve'
+                withAWS(credentials: 'AWS_CREEDS', region: 'us-east-1') {
 
-                    sh '''
-    chmod 600 $SSH_KEY
+                    withCredentials([
+                        file(credentialsId: 'PUBKEY_FILE',  variable: 'PUBKEY_FILE'),
+                        file(credentialsId: 'PRIVKEY_FILE', variable: 'PRIVKEY_FILE')
+                    ]) {
 
-    ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST << EOF
-        echo "Connected to EC2"
-        export USERNAME="$USERNAME"
-        export PASSWORD="$PASSWORD"
-        cd /home/sara/WTF_assignments/React-ToDoList
-        bash ~/React-ToDoList/deploy.sh
-EOF
-'''
+                        dir("terraform/modules") {
+                            sh """
+                                echo "AWS credentials loaded into environment"
+                               # Copy SSH keys for EC2 provisioning
+                                 cp "${PUBKEY_FILE}" ec2-modules/my_key.pub
+                                 cp "${PRIVKEY_FILE}" ec2-modules/my_key
+                                 chmod 600 ec2-modules/my_key
 
+                                terraform init
+                                terraform apply --auto-approve
+                                terraform destroy --auto-approve
+                            """
+                        }
+                    }
                 }
+                    
             }
         }
-    } 
-}    
+        
+    }
 
+        stage('Deploy to EC2') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'ec2-ssh-key',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    ),
+                    string(credentialsId: 'EC2_HOST', variable: 'EC2_HOST')
+                ]) {
+                    // Use script block to handle variable substitution properly
+                    script {
+                        def fullImageName = "${IMAGE_NAME}:${IMAGE_TAG}"
+
+
+                    sh '''
+                      chmod 600 $SSH_KEY
+
+                      ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST << EOF
+                      echo "Connected to EC2"
+                      export USERNAME="$USERNAME"
+                      export PASSWORD="$PASSWORD"
+                      cd /home/sara/WTF_assignments/React-ToDoList
+                      bash ~/React-ToDoList/deploy.sh
+                      EOF
+                    '''
+
+                    }
+                }
+            }
+        } 
+    }    
+}
 
