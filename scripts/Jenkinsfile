@@ -33,40 +33,6 @@ pipeline {
             }
         }
 
-        stage("Implement Terraform") {
-            
-            steps {
-                dir("terraform/modules") {
-                    sh 'terraform init'
-                    sh 'terraform apply --auto-approve'
-                withAWS(credentials: 'AWS_CREEDS', region: 'us-east-1') {
-
-                    withCredentials([
-                        file(credentialsId: 'PUBKEY_FILE',  variable: 'PUBKEY_FILE'),
-                        file(credentialsId: 'PRIVKEY_FILE', variable: 'PRIVKEY_FILE')
-                    ]) {
-
-                        dir("terraform/modules") {
-                            sh """
-                                echo "AWS credentials loaded into environment"
-                               # Copy SSH keys for EC2 provisioning
-                                 cp "${PUBKEY_FILE}" ec2-modules/my_key.pub
-                                 cp "${PRIVKEY_FILE}" ec2-modules/my_key
-                                 chmod 600 ec2-modules/my_key
-
-                                terraform init
-                                terraform apply --auto-approve
-                                terraform destroy --auto-approve
-                            """
-                        }
-                    }
-                }
-                    
-            }
-        }
-        
-    }
-
         stage('Deploy to EC2') {
             steps {
                 withCredentials([
