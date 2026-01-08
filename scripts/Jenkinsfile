@@ -34,37 +34,38 @@ pipeline {
         }
 
         stage('Deploy to EC2') {
-            steps {
-                withCredentials([
-                    sshUserPrivateKey(
-                        credentialsId: 'ec2-ssh-key',
-                        keyFileVariable: 'SSH_KEY',
-                        usernameVariable: 'SSH_USER'
-                    ),
-                    string(credentialsId: 'EC2_HOST', variable: 'EC2_HOST')
-                ]) {
-                    // Use script block to handle variable substitution properly
-                   // script{
+             steps {
+                 withCredentials([
+                     sshUserPrivateKey(
+                     credentialsId: 'ec2-ssh-key',
+                     keyFileVariable: 'SSH_KEY',
+                     usernameVariable: 'SSH_USER'
+            ),
+                string(credentialsId: 'EC2_HOST', variable: 'EC2_HOST'),
+                usernamePassword(
+                credentialsId: 'dockerhub-credentials',
+                usernameVariable: 'USERNAME',
+                passwordVariable: 'PASSWORD'
+            )
+            ]) {
+                sh '''
+                    chmod 600 $SSH_KEY
 
-                        //def fullImageName = "${IMAGE_NAME}:${IMAGE_TAG}"
+                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST << 'EOF'
+                    echo "Connected to EC2"
+                    export USERNAME="${USERNAME}"
+                    export PASSWORD="${PASSWORD}"
+
+                    cd /home/ubuntu/React-ToDoList
+                    bash deploy.sh
+                 EOF
+             '''
+                 }
 
 
-                    sh '''
-                      chmod 600 $SSH_KEY
-
-                      ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST << EOF
-                      echo "Connected to EC2"
-                      export USERNAME="$USERNAME"
-                      export PASSWORD="$PASSWORD"
-                      cd /home/ubuntu/React-ToDoList
-                      bash ~/React-ToDoList/deploy.sh
-                      EOF
-                    '''
-
-                    //}  
-                }
             }
-        } 
+        }
+
     }    
 }
 
