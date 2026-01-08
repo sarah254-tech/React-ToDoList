@@ -44,8 +44,9 @@ pipeline {
                     string(credentialsId: 'EC2_HOST', variable: 'EC2_HOST')
                 ]) {
                     // Use script block to handle variable substitution properly
-                    script {
-                        def fullImageName = "${IMAGE_NAME}:${IMAGE_TAG}"
+                   // script{
+
+                        //def fullImageName = "${IMAGE_NAME}:${IMAGE_TAG}"
 
 
                     sh '''
@@ -60,7 +61,7 @@ pipeline {
                       EOF
                     '''
 
-                    }
+                    //}  
                 }
             }
         } 
