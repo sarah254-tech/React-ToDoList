@@ -56,7 +56,7 @@ pipeline {
                       echo "Connected to EC2"
                       export USERNAME="$USERNAME"
                       export PASSWORD="$PASSWORD"
-                      cd /home/sara/WTF_assignments/React-ToDoList
+                      cd /home/ubuntu/React-ToDoList
                       bash ~/React-ToDoList/deploy.sh
                       EOF
                     '''
