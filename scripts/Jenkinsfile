@@ -57,7 +57,7 @@ pipeline {
                       export USERNAME="$USERNAME"
                       export PASSWORD="$PASSWORD"
                       cd /home/ubuntu/React-ToDoList
-                      
+                      bash ~/React-ToDoList/deploy.sh
                       EOF
                     '''
 
