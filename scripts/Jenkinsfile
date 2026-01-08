@@ -49,16 +49,15 @@ pipeline {
             )
         ]) {
                     sh """
-                        chmod 600 $SSH_KEY
+                        chmod 600 ${SSH_KEY}
 
-                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST << EOF
-                        echo "Connected to EC2"
-                        export USERNAME="${USERNAME}"
-                        export PASSWORD="${PASSWORD}"
+                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST \
+                        "echo "Connected to EC2" && \
+                        export USERNAME="${USERNAME} && \
 
-                        cd /home/ubuntu/React-ToDoList
-                        bash deploy.sh
-                        EOF
+                        cd /home/ubuntu/React-ToDoList && \
+                        bash deploy.sh"
+                        
                     """
                 }
             }
