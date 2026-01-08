@@ -49,15 +49,12 @@ pipeline {
             )
         ]) {
                     sh """
-                        chmod 600 $SSH_KEY
+                        chmod 600 ${SSH_KEY}
 
-                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@$EC2_HOST \
-                        
-                        export USERNAME=${USERNAME} && \
-                        export PASSWORD=${PASSWORD} && \
+                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ubuntu@${EC2_HOST} \
+                        "export USERNAME=${USERNAME} && \
                         cd /home/ubuntu/React-ToDoList && \
                         bash deploy.sh"
-                        
                     """
                 }
             }
